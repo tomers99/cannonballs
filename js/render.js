@@ -165,7 +165,15 @@ function drawBalls() {
     const r        = ball.landed ? 4 : 6;
     const color    = ballColor(ball.id);
     ctx.save();
-    if (!ball.landed) { ctx.shadowColor = color; ctx.shadowBlur = 10; }
+    if (!ball.landed) {
+      // Cheap glow: two concentric circles instead of shadowBlur
+      ctx.beginPath(); ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
+      ctx.fillStyle = color + '40'; // ~25% opacity halo
+      ctx.fill();
+      ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
+      ctx.fillStyle = color + '80'; // ~50% opacity inner halo
+      ctx.fill();
+    }
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fillStyle   = ball.landed ? '#888' : color;
     ctx.fill();
