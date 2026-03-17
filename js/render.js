@@ -166,13 +166,18 @@ function drawBalls() {
     const color    = ballColor(ball.id);
     ctx.save();
     if (!ball.landed) {
-      // Cheap glow: two concentric circles instead of shadowBlur
-      ctx.beginPath(); ctx.arc(cx, cy, r + 5, 0, Math.PI * 2);
-      ctx.fillStyle = color + '40'; // ~25% opacity halo
-      ctx.fill();
-      ctx.beginPath(); ctx.arc(cx, cy, r + 2, 0, Math.PI * 2);
-      ctx.fillStyle = color + '80'; // ~50% opacity inner halo
-      ctx.fill();
+      if (state.fancyGlow) {
+        ctx.shadowColor = color; ctx.shadowBlur = 10;
+      } else {
+        // Cheap glow: radial gradient halo, no shadowBlur
+        const grad = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r + 10);
+        grad.addColorStop(0,   color + 'cc');
+        grad.addColorStop(0.5, color + '66');
+        grad.addColorStop(1,   color + '00');
+        ctx.beginPath(); ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
+        ctx.fillStyle = grad;
+        ctx.fill();
+      }
     }
     ctx.beginPath(); ctx.arc(cx, cy, r, 0, Math.PI * 2);
     ctx.fillStyle   = ball.landed ? '#888' : color;

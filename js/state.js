@@ -11,6 +11,7 @@ const state = {
   globalT:   0,
   panX:      0,
   showAxes:  true,
+  fancyGlow: true,
   autoFire: {
     active:       false,
     fromAngle:    30,

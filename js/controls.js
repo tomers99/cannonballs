@@ -256,6 +256,9 @@ function initControls() {
   document.getElementById('show-axes-cb').addEventListener('change', e => {
     state.showAxes = e.target.checked; render();
   });
+  document.getElementById('fancy-glow-cb').addEventListener('change', e => {
+    state.fancyGlow = e.target.checked; render();
+  });
   document.getElementById('af-start-btn').addEventListener('click', startAutoFire);
   document.getElementById('af-stop-btn').addEventListener('click',  stopAutoFire);
 }
