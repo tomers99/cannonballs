@@ -148,15 +148,64 @@ function updateTooltip() {
     if (Math.hypot(mouseCanvasX - bx, mouseCanvasY - by) < 12) { hovered = ball; break; }
   }
   if (hovered) {
-    const dist = hovered.landed ? hovered.landX : hovered.x;
+    const dist  = hovered.landed ? hovered.landX  : hovered.x;
+    const tAir  = hovered.landed ? hovered.timeInAir : hovered.privateT;
+    let line = `#${hovered.id}  ${hovered.angle.toFixed(1)}\u00b0  x: ${dist.toFixed(1)}`;
+    line += `\nTime: ${tAir.toFixed(3)} t${hovered.landed ? '' : ' (in flight)'}`;
+    if (state.measurePaths) {
+      line += `\nPath length: ${hovered.pathLength.toFixed(1)}${hovered.landed ? '' : ' (so far)'}`;
+    }
     tooltip.style.display = 'block';
     tooltip.style.left    = (mouseClientX + 14) + 'px';
     tooltip.style.top     = (mouseClientY - 28) + 'px';
-    tooltip.textContent   =
-      `#${hovered.id}  ${hovered.angle.toFixed(1)}\u00b0  x: ${dist.toFixed(3)}`;
+    tooltip.textContent   = line;
   } else {
     tooltip.style.display = 'none';
   }
+}
+
+// ── Comparison ───────────────────────────────────────────────────
+function updateComparison() {
+  const inA = document.getElementById('cmp-a');
+  const inB = document.getElementById('cmp-b');
+  const result = document.getElementById('cmp-result');
+  if (!inA || !inB || !result) return;
+
+  const idA = parseInt(inA.value), idB = parseInt(inB.value);
+  if (!idA || !idB) { result.innerHTML = ''; return; }
+  if (idA === idB)  { result.innerHTML = '<span style="color:#e94560">Select two different balls.</span>'; return; }
+
+  const bA = state.balls.find(b => b.id === idA);
+  const bB = state.balls.find(b => b.id === idB);
+  if (!bA || !bB) {
+    result.innerHTML = '<span style="color:#e94560">Ball not found.</span>';
+    return;
+  }
+
+  const tA = bA.landed ? bA.timeInAir : bA.privateT;
+  const tB = bB.landed ? bB.timeInAir : bB.privateT;
+  const tRatio = tA / tB;
+
+  let html =
+    `<span style="color:#a0a0c0">Flight time:</span> ` +
+    `${tA.toFixed(3)} / ${tB.toFixed(3)} = ` +
+    `<b style="color:#ffe87c">${tRatio.toFixed(4)}</b>`;
+
+  if (state.measurePaths) {
+    if (bA.pathLength > 0 && bB.pathLength > 0) {
+      const lRatio = bA.pathLength / bB.pathLength;
+      html +=
+        `<br/><span style="color:#a0a0c0">Path length:</span> ` +
+        `${bA.pathLength.toFixed(1)} / ${bB.pathLength.toFixed(1)} = ` +
+        `<b style="color:#ffe87c">${lRatio.toFixed(4)}</b>`;
+    } else {
+      html += `<br/><span style="color:#506080">Path length not yet available.</span>`;
+    }
+  } else {
+    html += `<br/><span style="color:#506080">Enable "Measure paths" for length ratio.</span>`;
+  }
+
+  result.innerHTML = html;
 }
 
 // ── Init ─────────────────────────────────────────────────────────
@@ -259,6 +308,11 @@ function initControls() {
   document.getElementById('fancy-glow-cb').addEventListener('change', e => {
     state.fancyGlow = e.target.checked; render();
   });
+  document.getElementById('measure-paths-cb').addEventListener('change', e => {
+    state.measurePaths = e.target.checked;
+  });
+  document.getElementById('cmp-a').addEventListener('input', updateComparison);
+  document.getElementById('cmp-b').addEventListener('input', updateComparison);
   document.getElementById('af-start-btn').addEventListener('click', startAutoFire);
   document.getElementById('af-stop-btn').addEventListener('click',  stopAutoFire);
 }

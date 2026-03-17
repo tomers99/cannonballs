@@ -36,6 +36,7 @@ function loop(ts) {
     }
 
     if (needsBallListUpdate) { updateBallList(); needsBallListUpdate = false; }
+    updateComparison();
   }
   lastTimestamp = ts;
   render();

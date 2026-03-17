@@ -22,11 +22,12 @@ function fireBall() {
     privateT:  0,
     x:         0,
     y:         state.height,
-    path:      [[0, state.height]],
-    landed:    false,
-    landX:     null,
-    timeInAir: null,
-    showPath:  false,
+    path:       [[0, state.height]],
+    pathLength: 0,
+    landed:     false,
+    landX:      null,
+    timeInAir:  null,
+    showPath:   false,
   };
   state.balls.push(ball);
   return ball;
@@ -71,6 +72,10 @@ function updateBalls(dtSim) {
       ball.landed    = true;
       ball.landX     = ball.s * Math.cos(ball.angleRad) * t_land;
       ball.timeInAir = t_land;
+      if (state.measurePaths) {
+        const last = ball.path[ball.path.length - 1];
+        ball.pathLength += Math.hypot(ball.landX - last[0], -last[1]);
+      }
       ball.path.push([ball.landX, 0]); // exact landing point — never below ground
       anyLanded      = true;
     } else {
@@ -78,6 +83,7 @@ function updateBalls(dtSim) {
       const last = ball.path[ball.path.length - 1];
       const dx = ball.x - last[0], dy = ball.y - last[1];
       if (dx * dx + dy * dy >= PATH_STEP_SQ) {
+        if (state.measurePaths) ball.pathLength += Math.hypot(dx, dy);
         ball.path.push([ball.x, ball.y]);
       }
     }

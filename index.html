@@ -314,7 +314,24 @@
         <input type="checkbox" id="fancy-glow-cb" checked />
       </div>
 
+      <div class="toggle-row">
+        <span>Measure paths</span>
+        <input type="checkbox" id="measure-paths-cb" />
+      </div>
+
       <button class="btn btn-secondary" id="clear-btn">Clear all balls &nbsp;[Del]</button>
+    </div>
+
+    <!-- Compare -->
+    <div class="menu-section">
+      <h3>Compare</h3>
+      <div style="display:grid; grid-template-columns:auto 1fr; gap:6px 10px; align-items:center; font-size:11px; color:#a0a0c0; margin-bottom:10px;">
+        <label>Ball A #</label>
+        <input type="number" id="cmp-a" step="1" min="1" style="width:100%;" />
+        <label>Ball B #</label>
+        <input type="number" id="cmp-b" step="1" min="1" style="width:100%;" />
+      </div>
+      <div id="cmp-result" style="font-size:11px; line-height:1.9;"></div>
     </div>
 
     <!-- Auto-fire -->
@@ -373,6 +390,7 @@
     font: 11px 'Courier New', monospace;
     padding: 4px 9px; border-radius: 3px;
     border: 1px solid rgba(255,232,124,0.3);
+    white-space: pre;
   "></div>
 
   <script src="js/canvas.js"></script>
