@@ -170,11 +170,11 @@ function drawBalls() {
         ctx.shadowColor = color; ctx.shadowBlur = 10;
       } else {
         // Cheap glow: radial gradient halo, no shadowBlur
-        const grad = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r + 10);
-        grad.addColorStop(0,   color + 'cc');
-        grad.addColorStop(0.5, color + '66');
+        const grad = ctx.createRadialGradient(cx, cy, r * 0.5, cx, cy, r + 4);
+        grad.addColorStop(0,   color + '50');
+        grad.addColorStop(0.5, color + '28');
         grad.addColorStop(1,   color + '00');
-        ctx.beginPath(); ctx.arc(cx, cy, r + 10, 0, Math.PI * 2);
+        ctx.beginPath(); ctx.arc(cx, cy, r + 4, 0, Math.PI * 2);
         ctx.fillStyle = grad;
         ctx.fill();
       }
