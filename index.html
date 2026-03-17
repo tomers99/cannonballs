@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Cannonballs</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      display: flex;
+      height: 100vh;
+      overflow: hidden;
+      background: #1a1a2e;
+      font-family: 'Courier New', monospace;
+      color: #e0e0e0;
+    }
+
+    /* ── Left: simulation canvas ── */
+    #world-panel {
+      flex: 1 1 auto;
+      position: relative;
+      overflow: hidden;
+      background: #0a0a1a;
+    }
+
+    #world-canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+    }
+
+    /* ── Resize handle between panels ── */
+    #panel-resize {
+      flex: 0 0 5px;
+      background: #0f3460;
+      cursor: col-resize;
+      transition: background 0.15s;
+    }
+    #panel-resize:hover { background: #e94560; }
+
+    /* ── Right: control menu ── */
+    #menu-panel {
+      flex: 0 0 auto;
+      width: 280px;
+      display: flex;
+      flex-direction: column;
+      background: #16213e;
+      border-left: 2px solid #0f3460;
+      overflow-y: auto;
+    }
+
+    .menu-section {
+      padding: 12px 14px;
+      border-bottom: 1px solid #0f3460;
+    }
+
+    .menu-section h3 {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #e94560;
+      margin-bottom: 10px;
+    }
+
+    .control-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      gap: 8px;
+      padding: 2px 4px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+      transition: background 0.1s, border-color 0.1s;
+    }
+
+    .control-row.kb-focused {
+      background: rgba(233, 69, 96, 0.12);
+      border-color: #e94560;
+    }
+
+    .control-row label {
+      font-size: 12px;
+      color: #a0a0c0;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .control-row .shortcut {
+      font-size: 10px;
+      color: #506080;
+    }
+
+    input[type="range"] {
+      flex: 1;
+      accent-color: #e94560;
+      cursor: pointer;
+    }
+
+    input[type="number"] {
+      width: 64px;
+      background: #0a0a1a;
+      border: 1px solid #0f3460;
+      color: #e0e0e0;
+      padding: 3px 6px;
+      font-family: inherit;
+      font-size: 12px;
+      border-radius: 3px;
+      text-align: right;
+    }
+
+    input[type="number"]:focus { outline: 1px solid #e94560; }
+
+    .btn {
+      width: 100%;
+      padding: 9px;
+      background: #e94560;
+      border: none;
+      color: #fff;
+      font-family: inherit;
+      font-size: 13px;
+      font-weight: bold;
+      letter-spacing: 1px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: background 0.15s;
+    }
+
+    .btn:hover  { background: #c73652; }
+    .btn:active { background: #a02840; }
+
+    .btn-secondary            { background: #0f3460; }
+    .btn-secondary:hover      { background: #1a4a80; }
+    .btn-secondary:active     { background: #0a2848; }
+
+    .toggle-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      color: #a0a0c0;
+      margin-bottom: 6px;
+    }
+
+    .toggle-row input[type="checkbox"] {
+      accent-color: #e94560;
+      width: 15px; height: 15px;
+      cursor: pointer;
+    }
+
+    /* ── Ball list vertical resize handle ── */
+    #ball-list-handle {
+      height: 5px;
+      background: #0f3460;
+      cursor: row-resize;
+      flex-shrink: 0;
+      transition: background 0.15s;
+    }
+    #ball-list-handle:hover { background: #e94560; }
+
+    /* ── Cannonball log ── */
+    #ball-list {
+      flex: 0 0 auto;
+      height: 200px;
+      padding: 10px 14px;
+      overflow-y: auto;
+      min-height: 60px;
+    }
+
+    #ball-list h3 {
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #e94560;
+      margin-bottom: 8px;
+    }
+
+    .ball-entry {
+      font-size: 11px;
+      color: #8090b0;
+      padding: 5px 0;
+      border-bottom: 1px solid #0f3460;
+      line-height: 1.7;
+    }
+
+    .ball-entry .ball-id { color: #e0e0e0; font-weight: bold; }
+
+    .ball-entry .show-path-btn {
+      font-size: 10px;
+      padding: 1px 6px;
+      background: #0f3460;
+      border: none;
+      color: #a0c0ff;
+      cursor: pointer;
+      border-radius: 2px;
+      float: right;
+      font-family: inherit;
+    }
+
+    .ball-entry .show-path-btn:hover { background: #1a4a80; }
+
+    #no-balls-msg {
+      font-size: 11px;
+      color: #506080;
+      font-style: italic;
+    }
+
+    /* ── Key hint bar ── */
+    #key-hints {
+      flex: 0 0 auto;
+      padding: 8px 14px;
+      background: #0a0a1a;
+      border-top: 1px solid #0f3460;
+      font-size: 10px;
+      color: #506080;
+      line-height: 2;
+    }
+
+    .hint { margin-right: 8px; white-space: nowrap; }
+
+    .key {
+      display: inline-block;
+      background: #1a2a40;
+      border: 1px solid #0f3460;
+      border-radius: 3px;
+      padding: 0 4px;
+      color: #a0b0c0;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ══════════════ LEFT: World Canvas ══════════════ -->
+  <div id="world-panel">
+    <canvas id="world-canvas" tabindex="0"></canvas>
+  </div>
+
+  <!-- ══════════════ Panel resize handle ══════════════ -->
+  <div id="panel-resize"></div>
+
+  <!-- ══════════════ RIGHT: Menu ══════════════ -->
+  <div id="menu-panel">
+
+    <!-- Cannon -->
+    <div class="menu-section">
+      <h3>Cannon</h3>
+
+      <div class="control-row" id="row-angle">
+        <label>Angle <span class="shortcut">[A] ←→</span></label>
+        <input type="range"  id="angle-slider" min="0" max="360" step="1" value="45" />
+        <input type="number" id="angle-input"  step="1" value="45" />
+      </div>
+
+      <div class="control-row" id="row-height">
+        <label>Height <span class="shortcut">[H] ←→</span></label>
+        <input type="range"  id="height-slider" min="0" max="2000" step="5"  value="150" />
+        <input type="number" id="height-input"  min="0"            step="5"  value="150" />
+      </div>
+
+      <div class="control-row" id="row-s">
+        <label>Muzzle spd s <span class="shortcut">[S] ←→</span></label>
+        <input type="range"  id="s-slider" min="0" max="200" step="0.5" value="150" />
+        <input type="number" id="s-input"  min="0" max="200" step="0.5" value="150" />
+      </div>
+
+      <button class="btn" id="fire-btn">&#128312; FIRE &nbsp;[Space]</button>
+    </div>
+
+    <!-- Physics -->
+    <div class="menu-section">
+      <h3>Physics</h3>
+
+      <div class="control-row" id="row-gravity">
+        <label>Gravity g <span class="shortcut">[G] ←→</span></label>
+        <input type="range"  id="gravity-slider" min="-20" max="0" step="0.1" value="-9.8" />
+        <input type="number" id="gravity-input"  min="-20" max="0" step="0.1" value="-9.8" />
+      </div>
+    </div>
+
+    <!-- Time -->
+    <div class="menu-section">
+      <h3>Time</h3>
+
+      <div class="control-row" id="row-speed">
+        <label>Speed <span class="shortcut">[T] ←→</span></label>
+        <input type="range"  id="speed-slider" min="0.1" max="10" step="0.1" value="1" />
+        <input type="number" id="speed-input"  min="0.1" max="10" step="0.1" value="1" />
+      </div>
+      <div style="font-size:11px; color:#506080; text-align:right; margin-top:-4px;">t-units / sec</div>
+    </div>
+
+    <!-- View -->
+    <div class="menu-section">
+      <h3>View</h3>
+
+      <div class="control-row" id="row-zoom">
+        <label>Zoom <span class="shortcut">[Z] ←→</span></label>
+        <input type="range"  id="zoom-slider" min="0.1" max="5" step="0.05" value="0.2" />
+        <input type="number" id="zoom-input"  min="0.1" max="5" step="0.05" value="0.2" />
+      </div>
+
+      <div class="toggle-row">
+        <span>Show all paths <span class="shortcut">[P]</span></span>
+        <input type="checkbox" id="show-paths-cb" />
+      </div>
+
+      <div class="toggle-row">
+        <span>Show axes <span class="shortcut">[X]</span></span>
+        <input type="checkbox" id="show-axes-cb" checked />
+      </div>
+
+      <button class="btn btn-secondary" id="clear-btn">Clear all balls &nbsp;[Del]</button>
+    </div>
+
+    <!-- Auto-fire -->
+    <div class="menu-section">
+      <h3>Auto-fire <span class="shortcut">[Esc] stop</span></h3>
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px 10px; font-size:11px; color:#a0a0c0; margin-bottom:8px;">
+        <label>From°</label>
+        <input type="number" id="af-from"     value="30"  step="1"   style="width:100%;" />
+        <label>To°</label>
+        <input type="number" id="af-to"       value="75"  step="1"   style="width:100%;" />
+        <label>Step°</label>
+        <input type="number" id="af-step"     value="5"   step="0.5" style="width:100%;" />
+        <label>Interval s</label>
+        <input type="number" id="af-interval" value="1"   step="0.1" min="0.05" style="width:100%;" />
+      </div>
+      <button class="btn" id="af-start-btn">&#9654; Start sweep</button>
+      <button class="btn btn-secondary" id="af-stop-btn" style="display:none; margin-top:6px;">&#9646;&#9646; Stop</button>
+    </div>
+
+    <!-- Cannonball log -->
+    <div id="ball-list-handle"></div>
+    <div id="ball-list">
+      <h3>Cannonballs</h3>
+      <div id="no-balls-msg">No cannonballs fired yet.</div>
+    </div>
+
+    <!-- Key hints -->
+    <div id="key-hints">
+      <span class="hint"><span class="key">Space</span> Fire</span>
+      <span class="hint"><span class="key">A</span> Angle</span>
+      <span class="hint"><span class="key">H</span> Height</span>
+      <span class="hint"><span class="key">S</span> Muzzle spd</span>
+      <span class="hint"><span class="key">G</span> Gravity</span><br/>
+      <span class="hint"><span class="key">T</span> Sim speed</span>
+      <span class="hint"><span class="key">Z</span> Zoom</span>
+      <span class="hint"><span class="key">P</span> Paths</span>
+      <span class="hint"><span class="key">X</span> Axes</span>
+      <span class="hint"><span class="key">Del</span> Clear</span>
+      <span class="hint"><span class="key">Esc</span> Stop auto</span><br/>
+      <span style="color:#3a5070;">
+        After selecting: <span class="key">←</span><span class="key">→</span> adjust
+        &nbsp;|&nbsp; <span class="key">Shift</span> ×5 &nbsp; <span class="key">Ctrl</span> ×10
+      </span><br/>
+      <span style="color:#3a5070;">
+        No selection: <span class="key">←</span><span class="key">→</span> pan view
+        &nbsp;|&nbsp; drag canvas to pan
+      </span>
+    </div>
+
+  </div>
+
+  <!-- Tooltip for ball hover -->
+  <div id="ball-tooltip" style="
+    position: fixed; display: none; pointer-events: none; z-index: 200;
+    background: rgba(0,0,20,0.82); color: #ffe87c;
+    font: 11px 'Courier New', monospace;
+    padding: 4px 9px; border-radius: 3px;
+    border: 1px solid rgba(255,232,124,0.3);
+  "></div>
+
+  <script src="js/canvas.js"></script>
+  <script src="js/state.js"></script>
+  <script src="js/transform.js"></script>
+  <script src="js/physics.js"></script>
+  <script src="js/render.js"></script>
+  <script src="js/controls.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
